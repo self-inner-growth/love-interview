@@ -89,13 +89,65 @@
             opacity: 1;
             bottom: 40px;
         }
+
+        /* --- BGM 플레이어 및 이퀄라이저 스타일 --- */
+        #bgmBtn {
+            width: 3.5rem; 
+            height: 3.5rem;
+            background-color: rgba(100, 116, 139, 0.85); 
+            color: white;
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            z-index: 100;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            backdrop-filter: blur(4px);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        #bgmBtn:hover {
+            background-color: rgba(71, 85, 105, 1);
+            transform: scale(1.05);
+        }
+
+        .eq-bar {
+            width: 3px;
+            height: 16px;
+            background-color: white;
+            border-radius: 2px;
+            animation: bounce 1s infinite ease-in-out;
+        }
+        .eq-bar:nth-child(1) { animation-delay: 0s; }
+        .eq-bar:nth-child(2) { animation-delay: 0.2s; }
+        .eq-bar:nth-child(3) { animation-delay: 0.4s; }
+        .eq-bar:nth-child(4) { animation-delay: 0.6s; }
+
+        @keyframes bounce {
+            0%, 100% { transform: scaleY(0.4); }
+            50% { transform: scaleY(1.2); }
+        }
     </style>
 </head>
 <body class="flex justify-center py-6 px-4">
 
+    <div id="youtube-player" style="display: none;"></div>
+    <button id="bgmBtn">
+        <i data-lucide="play" id="bgmPlayIcon" class="w-6 h-6 ml-1"></i>
+        <div id="bgmWaveIcon" class="hidden flex gap-[4px] items-center justify-center h-full">
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+            <div class="eq-bar"></div>
+        </div>
+    </button>
+
     <div id="toast">📋 복사되었습니다!</div>
 
-    <div class="w-full max-w-md clean-card rounded-3xl overflow-hidden relative flex flex-col fade-in">
+    <div class="w-full max-w-md clean-card rounded-3xl overflow-hidden relative flex flex-col fade-in mt-10">
         
         <div class="bg-gradient-to-r from-rose-400 to-orange-300 text-white p-8 text-center relative">
             <div class="relative z-10"> 
@@ -106,12 +158,6 @@
             </div>
         </div>
 
-        <div id="youtube-player" class="hidden"></div>
-    
-    <button id="bgmBtn" class="fixed bottom-6 right-6 bg-white/90 backdrop-blur-sm border border-rose-200 p-3.5 rounded-full shadow-lg z-50 text-rose-500 hover:bg-rose-50 transition-all hidden flex items-center justify-center">
-        <i data-lucide="music" id="bgmIcon" class="w-5 h-5"></i>
-    </button>
-        
         <div class="p-6 space-y-8 flex-grow bg-white"> 
             
             <div class="text-center">
@@ -256,7 +302,9 @@
                 </div>
                 <p class="hand-font text-slate-400 text-xs mt-4">"청춘의 한 페이지를 함께 기록해요."</p>
             </div>
-        </div> <div class="bg-slate-50 border-t border-slate-200 p-6 text-center">
+        </div> 
+
+        <div class="bg-slate-50 border-t border-slate-200 p-6 text-center">
             <div class="flex justify-center gap-3 mb-4">
                 <a href="https://naver.me/x1mjS7zw" target="_blank" class="flex items-center gap-1.5 bg-[#03C75A] text-white px-3 py-1.5 rounded-full text-xs font-bold hover:shadow-md transition-all">
                     <i data-lucide="map-pin" class="w-3.5 h-3.5"></i>
@@ -277,19 +325,15 @@
             </div>
         </div>
 
-    </div> <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            if (window.lucide) {
-                lucide.createIcons();
-            }
-        });
+    </div> 
 
+    <script>
+        // ★ 앱스스크립트 배포 후 발급받은 URL로 꼭 변경해주세요!
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyXgxqgWrmIurQgIUENqH2TcSZa_gwZm53jY3caH9Y6bdf65v9UO_q5mrr-7939MBbi/exec";
 
         let ytPlayer;
         let isBgmPlaying = false;
 
-        // --- 1. 유튜브 Iframe API 로드 ---
         function loadYouTubeAPI() {
             const tag = document.createElement('script');
             tag.src = "https://www.youtube.com/iframe_api";
@@ -297,10 +341,8 @@
             firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
         }
 
-        // --- 2. API 준비 완료 시 자동 호출되는 콜백 함수 ---
         window.onYouTubeIframeAPIReady = async function() {
             try {
-                // 앱스스크립트의 doGet 함수로 요청을 보내 YOUTUBE_ID를 받아옵니다.
                 const response = await fetch(GAS_WEB_APP_URL);
                 const data = await response.json();
                 
@@ -310,13 +352,14 @@
                         width: '0',
                         videoId: data.youtubeId,
                         playerVars: {
-                            'autoplay': 0, // 브라우저 정책상 0으로 설정
+                            'autoplay': 1, // 자동재생 시도 (브라우저 정책상 막힐 수 있음)
                             'loop': 1,
-                            'playlist': data.youtubeId, // 반복 재생을 위해 필수
+                            'playlist': data.youtubeId, 
                             'controls': 0
                         },
                         events: {
-                            'onReady': onPlayerReady
+                            'onReady': onPlayerReady,
+                            'onStateChange': onPlayerStateChange
                         }
                     });
                 }
@@ -325,37 +368,44 @@
             }
         };
 
-        // --- 3. 플레이어 로드 완료 시 BGM 버튼 활성화 ---
         function onPlayerReady(event) {
-            const bgmBtn = document.getElementById('bgmBtn');
-            const bgmIcon = document.getElementById('bgmIcon');
-            
-            // 음악 볼륨 설정 (0~100 사이, 배경음악이므로 30 정도가 적당합니다)
-            ytPlayer.setVolume(30); 
-            
-            // 준비가 끝나면 화면에 BGM 버튼 표시
-            bgmBtn.classList.remove('hidden'); 
-
-            bgmBtn.addEventListener('click', () => {
-                if (isBgmPlaying) {
-                    ytPlayer.pauseVideo();
-                    bgmIcon.setAttribute('data-lucide', 'music'); // 정지 시 음표 아이콘
-                } else {
-                    ytPlayer.playVideo();
-                    bgmIcon.setAttribute('data-lucide', 'volume-2'); // 재생 시 스피커 아이콘
-                }
-                lucide.createIcons(); // 바뀐 아이콘 렌더링
-                isBgmPlaying = !isBgmPlaying;
-            });
+            ytPlayer.setVolume(30);
+            event.target.playVideo(); // 로드 완료 즉시 재생 시도
         }
 
-        // --- 4. 기존 DOMContentLoaded 부분 수정 ---
+        function onPlayerStateChange(event) {
+            const playIcon = document.getElementById('bgmPlayIcon');
+            const waveIcon = document.getElementById('bgmWaveIcon');
+
+            if (event.data === YT.PlayerState.PLAYING) {
+                isBgmPlaying = true;
+                playIcon.classList.add('hidden');
+                waveIcon.classList.remove('hidden');
+            } else {
+                isBgmPlaying = false;
+                playIcon.classList.remove('hidden');
+                waveIcon.classList.add('hidden');
+            }
+        }
+
+        // BGM 버튼 클릭 이벤트
+        document.getElementById('bgmBtn').addEventListener('click', () => {
+            if (!ytPlayer) return; 
+            
+            if (isBgmPlaying) {
+                ytPlayer.pauseVideo();
+            } else {
+                ytPlayer.playVideo();
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
             if (window.lucide) {
                 lucide.createIcons();
             }
-            loadYouTubeAPI(); /
-                                  
+            loadYouTubeAPI(); // 페이지 로드시 유튜브 API 호출
+        });
+
         function showToast(message) {
             var toast = document.getElementById("toast");
             toast.innerText = message;
@@ -364,12 +414,7 @@
         }
 
         function copyFormToClipboard() {
-            const formText = `[감정서재 인터뷰 신청합니다] 🙋‍♀️
-
-1. 성함 / 연락처 : 
-2. 희망 장소 : (계양구 또는 부평구 중 택1)
-3. 가능 일시 : (평일 또는 주말 OO시 이후)
-4. 나의 연애 키워드 : (예: 모태솔로, 장기연애, 짝사랑 등)`;
+            const formText = `[감정서재 인터뷰 신청합니다] 🙋‍♀️\n\n1. 성함 / 연락처 : \n2. 희망 장소 : (계양구 또는 부평구 중 택1)\n3. 가능 일시 : (평일 또는 주말 OO시 이후)\n4. 나의 연애 키워드 : (예: 모태솔로, 장기연애, 짝사랑 등)`;
 
             navigator.clipboard.writeText(formText).then(() => {
                 showToast("신청 양식이 복사되었습니다! 📋");
