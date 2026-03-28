@@ -67,6 +67,15 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* 인트로 버튼 전용 등장 애니메이션 */
+        .btn-fade-in {
+            animation: btnFadeIn 1.5s ease-out forwards;
+        }
+        @keyframes btnFadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         details > summary {
             list-style: none;
         }
@@ -154,23 +163,36 @@
             z-index: 9999;
             background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%); 
         }
+        
         /* 메인 컨텐츠 초기 숨김 설정 */
         #mainContainer {
             display: none;
             opacity: 0;
+        }
+
+        /* 타이핑 텍스트 영역 고정 높이 (깜빡임 방지) */
+        .typing-container {
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
     </style>
 </head>
 <body>
 
     <div id="introScreen">
-        <div class="bg-white/30 p-5 rounded-full mb-6 backdrop-blur-sm shadow-inner flex items-center justify-center">
-            <i data-lucide="mail-heart" class="w-12 h-12 text-white"></i>
+        <div class="bg-white/30 p-5 rounded-full mb-6 backdrop-blur-sm shadow-inner flex items-center justify-center fade-in">
+            <i data-lucide="mail-heart" class="w-10 h-10 text-white"></i>
         </div>
-        <h1 class="hand-font text-3xl font-bold text-white mb-2 drop-shadow-md tracking-wide">당신을 초대합니다</h1>
-        <p class="text-white/80 text-sm mb-10 font-medium tracking-widest">감정서재</p>
         
-        <button id="enterBtn" class="bg-white text-rose-500 px-8 py-3.5 rounded-full font-bold shadow-lg shadow-rose-300/50 hover:shadow-xl hover:-translate-y-1 transition-all flex items-center gap-2 group cursor-pointer">
+        <div class="typing-container mb-10 text-center">
+            <p id="typeLine1" class="hand-font text-white/90 text-sm mb-2 font-medium tracking-widest h-5"></p>
+            <h1 id="typeLine2" class="hand-font text-3xl font-bold text-white drop-shadow-md tracking-wide h-10"></h1>
+        </div>
+        
+        <button id="enterBtn" class="opacity-0 bg-white/30 backdrop-blur-md border border-white/40 text-white px-8 py-3.5 rounded-full font-bold shadow-lg hover:bg-white/40 hover:-translate-y-1 transition-all flex items-center gap-2 group cursor-pointer">
             <span>초대장 열어보기</span>
             <i data-lucide="chevron-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
         </button>
@@ -381,6 +403,37 @@
         // 앱스스크립트 주소
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyXgxqgWrmIurQgIUENqH2TcSZa_gwZm53jY3caH9Y6bdf65v9UO_q5mrr-7939MBbi/exec";
 
+        // --- 타이핑 애니메이션 ---
+        const text1 = "출판사 감정서재";
+        const text2 = "당신을 초대합니다.";
+        let i = 0;
+        let j = 0;
+        
+        function typeWriter1() {
+            if (i < text1.length) {
+                document.getElementById("typeLine1").innerHTML += text1.charAt(i);
+                i++;
+                setTimeout(typeWriter1, 120); // 글자 타이핑 속도
+            } else {
+                setTimeout(typeWriter2, 400); // 첫 줄 끝나고 잠깐 쉬기
+            }
+        }
+        
+        function typeWriter2() {
+            if (j < text2.length) {
+                document.getElementById("typeLine2").innerHTML += text2.charAt(j);
+                j++;
+                setTimeout(typeWriter2, 120); // 글자 타이핑 속도
+            } else {
+                // 타이핑 완료 후 버튼 등장
+                setTimeout(() => {
+                    const btn = document.getElementById("enterBtn");
+                    btn.classList.remove("opacity-0");
+                    btn.classList.add("btn-fade-in");
+                }, 500);
+            }
+        }
+
         // --- 인트로 및 BGM 제어 스크립트 ---
         const enterBtn = document.getElementById('enterBtn');
         const introScreen = document.getElementById('introScreen');
@@ -405,22 +458,20 @@
 
         // 인트로 화면의 [초대장 열어보기] 버튼 클릭 시
         enterBtn.addEventListener('click', () => {
-            // 1. 음악 즉시 재생 (사용자가 클릭한 직후이므로 100% 재생됨)
+            // 음악 즉시 재생
             bgmAudio.play().then(() => {
                 updateBgmUI(true);
             }).catch(e => console.error("오디오 재생 오류:", e));
 
-            // 2. 인트로 화면 페이드 아웃 & 메인 화면 페이드 인
+            // 인트로 화면 페이드 아웃 & 메인 화면 페이드 인
             introScreen.classList.add('fade-out');
             
             setTimeout(() => {
-                introScreen.style.display = 'none'; // DOM에서 제거
-                mainContainer.style.display = 'flex'; // 메인 컨텐츠 보이기
-                bgmBtn.style.display = 'flex'; // BGM 버튼 보이기
-                
-                // 페이드 인 애니메이션 클래스 추가
+                introScreen.style.display = 'none'; 
+                mainContainer.style.display = 'flex'; 
+                bgmBtn.style.display = 'flex'; 
                 mainContainer.classList.add('fade-in');
-            }, 800); // CSS transition 시간(0.8초)과 동일하게 맞춤
+            }, 800); 
         });
 
         // 우측 상단 BGM 수동 조작 버튼
@@ -437,6 +488,9 @@
             if (window.lucide) {
                 lucide.createIcons();
             }
+            
+            // 페이지 로드 0.6초 뒤에 타이핑 시작
+            setTimeout(typeWriter1, 600);
         });
 
         // --- 기타 기능 스크립트 (Gemini API 등) ---
