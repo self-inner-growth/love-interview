@@ -190,11 +190,9 @@
             align-items: center;
         }
 
-        /* 모바일 번쩍임 방지를 위해 opacity: 0과 delay 추가 */
+        /* 사진 애니메이션 */
         .photo-fade-in {
-            opacity: 0; 
             animation: photoFadeIn 1s ease-out forwards;
-            animation-delay: 0.2s;
         }
         @keyframes photoFadeIn {
             from { opacity: 0; transform: scale(0.95) translateY(10px); }
@@ -204,9 +202,11 @@
 </head>
 <body>
 
+    <div id="preloader" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%); z-index: 999999; transition: opacity 0.5s ease;"></div>
+
     <div id="introScreen">
-        <div class="mb-8 photo-fade-in flex justify-center">
-            <img src="intro-image.png" alt="초대장 커버 사진" style="width: 160px; height: 160px;" class="w-40 h-40 object-cover rounded-2xl shadow-xl border-4 border-white/50 bg-white/20 backdrop-blur-sm" onerror="this.style.display='none'">
+        <div class="mb-8 flex justify-center">
+            <img id="introImage" src="intro-image.png" alt="초대장 커버 사진" style="width: 160px; height: 160px; opacity: 0;" class="w-40 h-40 object-cover rounded-2xl shadow-xl border-4 border-white/50 bg-white/20 backdrop-blur-sm" onerror="this.style.display='none'">
         </div>
         
         <div class="typing-container mb-10 text-center">
@@ -214,7 +214,7 @@
             <h1 id="typeLine2" class="hand-font text-3xl font-bold text-white drop-shadow-md tracking-wide h-10"></h1>
         </div>
         
-        <button id="enterBtn" class="opacity-0 bg-white/30 backdrop-blur-md border border-white/40 text-white px-8 py-3.5 rounded-full font-bold shadow-lg hover:bg-white/40 hover:-translate-y-1 transition-all flex items-center gap-2 group cursor-pointer">
+        <button id="enterBtn" style="opacity: 0;" class="opacity-0 bg-white/30 backdrop-blur-md border border-white/40 text-white px-8 py-3.5 rounded-full font-bold shadow-lg hover:bg-white/40 hover:-translate-y-1 transition-all flex items-center gap-2 group cursor-pointer">
             <span>초대장 열어보기</span>
             <i data-lucide="chevron-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
         </button>
@@ -524,12 +524,26 @@
             }
         });
 
-        document.addEventListener('DOMContentLoaded', () => {
+        // 🚨 번쩍임 방지 핵심 로직 (페이지가 완전히 렌더링된 후 애니메이션 시작)
+        window.addEventListener('load', () => {
             if (window.lucide) {
                 lucide.createIcons();
             }
+
+            const preloader = document.getElementById('preloader');
+            // 로딩 완료 후 가림막(프리로더) 투명화
+            preloader.style.opacity = '0';
             
-            setTimeout(typeWriter1, 600);
+            setTimeout(() => {
+                preloader.style.display = 'none';
+                
+                // 가림막이 걷힌 후 사진 등장 애니메이션 클래스 부여
+                const introImage = document.getElementById('introImage');
+                if(introImage) introImage.classList.add('photo-fade-in');
+                
+                // 사진 애니메이션 시작 직후 타이핑 시작
+                setTimeout(typeWriter1, 300);
+            }, 500); // 가림막 페이드아웃 대기시간
         });
 
         // --- 기타 기능 스크립트 (Gemini API 등) ---
