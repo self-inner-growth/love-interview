@@ -556,7 +556,7 @@
         }
 
         function copyFormToClipboard() {
-            const formText = `[감정서재 인터뷰 신청합니다] 🙋‍♀️\n\n1. 성함 / 연락처 : \n2. 희망 장소 : (계양구 또는 부평구 중 택1)\n3. 가능 일시 : (평일 또는 주말 OO시 이후)\n4. 나의 연애 키워드 : (예: 모태솔로, 장기연애, 짝사랑 등)`;
+            const formText = `[감정서재 인터뷰 신청합니다] 🙋‍♀️\n\n1. 성함 : \n2. 희망 장소 : (계양구 또는 부평구 중 택1)\n3. 가능 일시 : (평일 또는 주말 OO시 이후)\n4. 나의 연애 키워드 : (예: 모태솔로, 장기연애, 짝사랑 등)`;
 
             navigator.clipboard.writeText(formText).then(() => {
                 showToast("신청 양식이 복사되었습니다! 📋");
